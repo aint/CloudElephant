@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"strings"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -27,7 +28,19 @@ func ListUnattachedELBs() {
 	elbList := describeAllELBs()
 	for _, elb := range elbList {
 		if len(elb.Instances) == 0 {
-			fmt.Println(*elb.LoadBalancerName, ", az: ", &elb.AvailabilityZones)
+			var region string
+			if elb.AvailabilityZones != nil && len(elb.AvailabilityZones) > 0 {
+				az := *elb.AvailabilityZones[0]
+				region = az[:len(az)-1]
+			}
+			if elb.CanonicalHostedZoneName != nil {
+				region = strings.Split(*elb.CanonicalHostedZoneName, ".")[1]
+			} else if elb.DNSName != nil {
+				region = strings.Split(*elb.DNSName, ".")[1]
+			}
+			fmt.Println(*elb.LoadBalancerName, ", region: ", region)
+
+			// fmt.Println(elb)
 		}
 	}
 }
