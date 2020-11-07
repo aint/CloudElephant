@@ -22,8 +22,17 @@ import (
 	"github.com/aws/aws-sdk-go/service/elb"
 )
 
-// DescribeELBs describes all ELBs
-func DescribeAllELBs() {
+// ListUnattachedELBs lists unattached ELBs
+func ListUnattachedELBs() {
+	elbList := describeAllELBs()
+	for _, elb := range elbList {
+		if len(elb.Instances) == 0 {
+			fmt.Println(*elb.LoadBalancerName, ", az: ", &elb.AvailabilityZones)
+		}
+	}
+}
+
+func describeAllELBs() []*elb.LoadBalancerDescription {
 	sess, err := session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	})
@@ -47,9 +56,9 @@ func DescribeAllELBs() {
 			// Message from an error.
 			fmt.Println(err.Error())
 		}
-		return
+		return nil
 	}
 
-	fmt.Println(result)
+	return result.LoadBalancerDescriptions
 
 }
