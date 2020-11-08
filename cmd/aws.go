@@ -23,9 +23,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/elb"
 )
 
-// ListUnattachedELBs lists unattached ELBs
-func ListUnattachedELBs() {
-	elbList := describeAllELBs()
+// ListUnattachedClassicLBs lists unattached ELBs
+func ListUnattachedClassicLBs() {
+	elbList := describeAllClassicLBs()
 	for _, elb := range elbList {
 		if len(elb.Instances) == 0 {
 			var region string
@@ -45,7 +45,7 @@ func ListUnattachedELBs() {
 	}
 }
 
-func describeAllELBs() []*elb.LoadBalancerDescription {
+func describeAllClassicLBs() []*elb.LoadBalancerDescription {
 	sess, err := session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	})
