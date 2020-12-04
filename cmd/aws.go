@@ -21,9 +21,77 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/elb"
+	"github.com/aws/aws-sdk-go/service/elbv2"
 )
 
 // ListUnattachedClassicLBs lists unattached ELBs
+// ListUnattachedELBs lists unattached Application and Network Load Balancers
+func ListUnattachedELBs() {
+	sess, err := session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	})
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	svc := elbv2.New(sess)
+
+	elbList := describeAllELBs()
+	for _, elb := range elbList {
+		input := &elbv2.DescribeTargetGroupsInput{
+			LoadBalancerArn: elb.LoadBalancerArn,
+		}
+		output, err1 := svc.DescribeTargetGroups(input)
+		if err1 != nil {
+			fmt.Println(err1)
+			return
+		}
+		unused, err2 := targetGroupsNotInUse(svc, output.TargetGroups)
+		if err2 != nil {
+			fmt.Println(err2)
+			return
+		}
+		if unused {
+			fmt.Println("ELB is unused: ", *elb.LoadBalancerName)
+		}
+	}
+}
+
+func targetGroupsNotInUse(elbSvc *elbv2.ELBV2, targetGroups []*elbv2.TargetGroup) (bool, error) {
+	for _, targetGroup := range targetGroups {
+		input := &elbv2.DescribeTargetHealthInput{
+			TargetGroupArn: targetGroup.TargetGroupArn,
+		}
+		output, err := elbSvc.DescribeTargetHealth(input)
+		if err != nil {
+			return false, err
+		}
+		if len(output.TargetHealthDescriptions) > 0 {
+			// fmt.Println("TargetGroup is in use: ", *targetGroup.TargetGroupName)
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+func describeAllELBs() []*elbv2.LoadBalancer {
+	sess, err := session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	})
+	svc := elbv2.New(sess)
+	input := &elbv2.DescribeLoadBalancersInput{}
+
+	result, err := svc.DescribeLoadBalancers(input)
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil
+	}
+
+	return result.LoadBalancers
+}
+
+// ListUnattachedClassicLBs lists unattached Classic Load Balancers
 func ListUnattachedClassicLBs() {
 	elbList := describeAllClassicLBs()
 	for _, elb := range elbList {
