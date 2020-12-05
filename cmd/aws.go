@@ -24,7 +24,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/elbv2"
 )
 
-// ListUnattachedClassicLBs lists unattached ELBs
 // ListUnattachedELBs lists unattached Application and Network Load Balancers
 func ListUnattachedELBs() {
 	sess, err := session.NewSessionWithOptions(session.Options{
