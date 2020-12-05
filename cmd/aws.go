@@ -16,8 +16,9 @@ limitations under the License.
 package cmd
 
 import (
-	"strings"
 	"fmt"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/elb"
@@ -51,7 +52,8 @@ func ListUnattachedELBs() {
 			return
 		}
 		if unused {
-			fmt.Println("ELB is unused: ", *elb.LoadBalancerName)
+			region := strings.Split(*elb.LoadBalancerArn, ":")[3]
+			fmt.Println(*elb.LoadBalancerName, ", region: ", region)
 		}
 	}
 }
