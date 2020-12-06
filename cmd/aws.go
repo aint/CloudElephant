@@ -25,37 +25,41 @@ import (
 	"github.com/aws/aws-sdk-go/service/elbv2"
 )
 
-// ListUnattachedELBs lists unattached Application and Network Load Balancers
-func ListUnattachedELBs() {
+// ListUnattachedELBs returns unattached Application and Network Load Balancers
+func ListUnattachedELBs() ([]string, error) {
 	sess, err := session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	})
 	if err != nil {
-		fmt.Println(err)
-		return
+   		return nil, fmt.Errorf("Error creating new AWS session: %w", err)
 	}
 	svc := elbv2.New(sess)
 
-	elbList := describeAllELBs()
+	elbList, err := describeAllELBs()
+	if err != nil {
+		return nil, err
+	}
+
+	unattachedELBList := make([]string, 0)
 	for _, elb := range elbList {
 		input := &elbv2.DescribeTargetGroupsInput{
 			LoadBalancerArn: elb.LoadBalancerArn,
 		}
-		output, err1 := svc.DescribeTargetGroups(input)
-		if err1 != nil {
-			fmt.Println(err1)
-			return
+		output, err := svc.DescribeTargetGroups(input)
+		if err != nil {
+			return nil, fmt.Errorf("Error describing Target Groups for %v: %w", *elb.LoadBalancerName, err)
 		}
-		unused, err2 := targetGroupsNotInUse(svc, output.TargetGroups)
-		if err2 != nil {
-			fmt.Println(err2)
-			return
+		unused, err := targetGroupsNotInUse(svc, output.TargetGroups)
+		if err != nil {
+			return nil, err
 		}
 		if unused {
 			region := strings.Split(*elb.LoadBalancerArn, ":")[3]
-			fmt.Println(*elb.LoadBalancerName, ", region: ", region)
+			elbWithRegion := fmt.Sprint(*elb.LoadBalancerName, ", region: ", region)
+			unattachedELBList = append(unattachedELBList, elbWithRegion)
 		}
 	}
+	return unattachedELBList, nil
 }
 
 func targetGroupsNotInUse(elbSvc *elbv2.ELBV2, targetGroups []*elbv2.TargetGroup) (bool, error) {
@@ -65,7 +69,7 @@ func targetGroupsNotInUse(elbSvc *elbv2.ELBV2, targetGroups []*elbv2.TargetGroup
 		}
 		output, err := elbSvc.DescribeTargetHealth(input)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("Error describing Target Groups Health %v: %w", *targetGroup.TargetGroupArn, err)
 		}
 		if len(output.TargetHealthDescriptions) > 0 {
 			// fmt.Println("TargetGroup is in use: ", *targetGroup.TargetGroupName)
@@ -75,21 +79,22 @@ func targetGroupsNotInUse(elbSvc *elbv2.ELBV2, targetGroups []*elbv2.TargetGroup
 	return true, nil
 }
 
-func describeAllELBs() []*elbv2.LoadBalancer {
+func describeAllELBs() ([]*elbv2.LoadBalancer, error) {
 	sess, err := session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	})
+	if err != nil {
+		return nil, fmt.Errorf("Error creating new AWS session: %w", err)
+ 	}
+
 	svc := elbv2.New(sess)
 	input := &elbv2.DescribeLoadBalancersInput{}
-
 	result, err := svc.DescribeLoadBalancers(input)
-
 	if err != nil {
-		fmt.Println(err.Error())
-		return nil
+		return nil, fmt.Errorf("Error describing ELBs: %w", err)
 	}
 
-	return result.LoadBalancers
+	return result.LoadBalancers, nil
 }
 
 // ListUnattachedClassicLBs lists unattached Classic Load Balancers
