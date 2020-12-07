@@ -71,7 +71,6 @@ func targetGroupsNotInUse(elbSvc *elbv2.ELBV2, targetGroups []*elbv2.TargetGroup
 			return false, fmt.Errorf("Error describing Target Groups Health %v: %w", *targetGroup.TargetGroupArn, err)
 		}
 		if len(output.TargetHealthDescriptions) > 0 {
-			// fmt.Println("TargetGroup is in use: ", *targetGroup.TargetGroupName)
 			return false, nil
 		}
 	}
@@ -119,8 +118,6 @@ func ListUnattachedClassicLBs() ([]string, error) {
 			}
 			elbWithRegion := fmt.Sprint(*elb.LoadBalancerName, ", region: ", region)
 			unattachedELBList = append(unattachedELBList, elbWithRegion)
-
-			// fmt.Println(elb)
 		}
 	}
 
