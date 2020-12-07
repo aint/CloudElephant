@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/aws/aws-sdk-go/service/elbv2"
@@ -80,6 +79,7 @@ func targetGroupsNotInUse(elbSvc *elbv2.ELBV2, targetGroups []*elbv2.TargetGroup
 }
 
 func describeAllELBs() ([]*elbv2.LoadBalancer, error) {
+	// TODO refactor
 	sess, err := session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	})
@@ -97,9 +97,14 @@ func describeAllELBs() ([]*elbv2.LoadBalancer, error) {
 	return result.LoadBalancers, nil
 }
 
-// ListUnattachedClassicLBs lists unattached Classic Load Balancers
-func ListUnattachedClassicLBs() {
-	elbList := describeAllClassicLBs()
+// ListUnattachedClassicLBs returns unattached Classic Load Balancers
+func ListUnattachedClassicLBs() ([]string, error) {
+	elbList, err := describeAllClassicLBs()
+	if err != nil {
+		return nil, err
+	}
+
+	unattachedELBList := make([]string, 0)
 	for _, elb := range elbList {
 		if len(elb.Instances) == 0 {
 			var region string
@@ -112,14 +117,17 @@ func ListUnattachedClassicLBs() {
 			} else if elb.DNSName != nil {
 				region = strings.Split(*elb.DNSName, ".")[1]
 			}
-			fmt.Println(*elb.LoadBalancerName, ", region: ", region)
+			elbWithRegion := fmt.Sprint(*elb.LoadBalancerName, ", region: ", region)
+			unattachedELBList = append(unattachedELBList, elbWithRegion)
 
 			// fmt.Println(elb)
 		}
 	}
+
+	return unattachedELBList, nil
 }
 
-func describeAllClassicLBs() []*elb.LoadBalancerDescription {
+func describeAllClassicLBs() ([]*elb.LoadBalancerDescription, error) {
 	sess, err := session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	})
@@ -129,23 +137,8 @@ func describeAllClassicLBs() []*elb.LoadBalancerDescription {
 	result, err := svc.DescribeLoadBalancers(input)
 
 	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case elb.ErrCodeAccessPointNotFoundException:
-				fmt.Println(elb.ErrCodeAccessPointNotFoundException, aerr.Error())
-			case elb.ErrCodeDependencyThrottleException:
-				fmt.Println(elb.ErrCodeDependencyThrottleException, aerr.Error())
-			default:
-				fmt.Println(aerr.Error())
-			}
-		} else {
-			// Print the error, cast err to awserr.Error to get the Code and
-			// Message from an error.
-			fmt.Println(err.Error())
-		}
-		return nil
+		return nil, fmt.Errorf("Error describing classic ELBs: %w", err)
 	}
 
-	return result.LoadBalancerDescriptions
-
+	return result.LoadBalancerDescriptions, nil
 }
