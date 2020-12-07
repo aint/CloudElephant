@@ -26,15 +26,13 @@ import (
 
 // ListUnattachedELBs returns unattached Application and Network Load Balancers
 func ListUnattachedELBs() ([]string, error) {
-	sess, err := session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	})
+	sess, err := newSession()
 	if err != nil {
-   		return nil, fmt.Errorf("Error creating new AWS session: %w", err)
+		return nil, err
 	}
 	svc := elbv2.New(sess)
 
-	elbList, err := describeAllELBs()
+	elbList, err := describeAllELBs(svc)
 	if err != nil {
 		return nil, err
 	}
@@ -77,18 +75,9 @@ func targetGroupsNotInUse(elbSvc *elbv2.ELBV2, targetGroups []*elbv2.TargetGroup
 	return true, nil
 }
 
-func describeAllELBs() ([]*elbv2.LoadBalancer, error) {
-	// TODO refactor
-	sess, err := session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("Error creating new AWS session: %w", err)
- 	}
-
-	svc := elbv2.New(sess)
+func describeAllELBs(elbV2Svc *elbv2.ELBV2) ([]*elbv2.LoadBalancer, error) {
 	input := &elbv2.DescribeLoadBalancersInput{}
-	result, err := svc.DescribeLoadBalancers(input)
+	result, err := elbV2Svc.DescribeLoadBalancers(input)
 	if err != nil {
 		return nil, fmt.Errorf("Error describing ELBs: %w", err)
 	}
@@ -98,7 +87,13 @@ func describeAllELBs() ([]*elbv2.LoadBalancer, error) {
 
 // ListUnattachedClassicLBs returns unattached Classic Load Balancers
 func ListUnattachedClassicLBs() ([]string, error) {
-	elbList, err := describeAllClassicLBs()
+	sess, err := newSession()
+	if err != nil {
+		return nil, err
+	}
+	elbSvc := elb.New(sess)
+
+	elbList, err := describeAllClassicLBs(elbSvc)
 	if err != nil {
 		return nil, err
 	}
@@ -124,18 +119,22 @@ func ListUnattachedClassicLBs() ([]string, error) {
 	return unattachedELBList, nil
 }
 
-func describeAllClassicLBs() ([]*elb.LoadBalancerDescription, error) {
-	sess, err := session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	})
-	svc := elb.New(sess)
+func describeAllClassicLBs(elbSvc *elb.ELB) ([]*elb.LoadBalancerDescription, error) {
 	input := &elb.DescribeLoadBalancersInput{}
-
-	result, err := svc.DescribeLoadBalancers(input)
-
+	output, err := elbSvc.DescribeLoadBalancers(input)
 	if err != nil {
 		return nil, fmt.Errorf("Error describing classic ELBs: %w", err)
 	}
 
-	return result.LoadBalancerDescriptions, nil
+	return output.LoadBalancerDescriptions, nil
+}
+
+func newSession() (*session.Session, error) {
+	sess, err := session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Error creating new AWS session: %w", err)
+	}
+	return sess, nil
 }
