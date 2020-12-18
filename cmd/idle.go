@@ -27,7 +27,20 @@ var idleCmd = &cobra.Command{
 	Short: "Find idle load balancers",
 	Long: `Scan your load balancers and find idle ones.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("idle called")
+		fmt.Println("Idle ELBs:")
+
+		clbList, err1 := ListUnattachedClassicLBs()
+		if err1 == nil {
+			for _, elb := range clbList {
+				fmt.Println(" - ", elb)
+			}
+		}
+		elbList, err2 := ListUnattachedELBs()
+		if err2 == nil {
+			for _, elb := range elbList {
+				fmt.Println(" - ", elb)
+			}
+		}
 	},
 }
 
