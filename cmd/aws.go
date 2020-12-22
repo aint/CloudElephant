@@ -101,16 +101,7 @@ func ListUnattachedClassicLBs() ([]string, error) {
 	unattachedELBList := make([]string, 0)
 	for _, elb := range elbList {
 		if len(elb.Instances) == 0 {
-			var region string
-			if elb.AvailabilityZones != nil && len(elb.AvailabilityZones) > 0 {
-				az := *elb.AvailabilityZones[0]
-				region = az[:len(az)-1]
-			}
-			if elb.CanonicalHostedZoneName != nil {
-				region = strings.Split(*elb.CanonicalHostedZoneName, ".")[1]
-			} else if elb.DNSName != nil {
-				region = strings.Split(*elb.DNSName, ".")[1]
-			}
+			region := extractClassicLBRegion(elb)
 			elbWithRegion := fmt.Sprint(*elb.LoadBalancerName, ", region: ", region)
 			unattachedELBList = append(unattachedELBList, elbWithRegion)
 		}
@@ -127,6 +118,20 @@ func describeAllClassicLBs(elbSvc *elb.ELB) ([]*elb.LoadBalancerDescription, err
 	}
 
 	return output.LoadBalancerDescriptions, nil
+}
+
+func extractClassicLBRegion(elb *elb.LoadBalancerDescription) string {
+	var region string
+	if elb.AvailabilityZones != nil && len(elb.AvailabilityZones) > 0 {
+		az := *elb.AvailabilityZones[0]
+		region = az[:len(az)-1]
+	}
+	if elb.CanonicalHostedZoneName != nil {
+		region = strings.Split(*elb.CanonicalHostedZoneName, ".")[1]
+	} else if elb.DNSName != nil {
+		region = strings.Split(*elb.DNSName, ".")[1]
+	}
+	return region
 }
 
 func newSession() (*session.Session, error) {
