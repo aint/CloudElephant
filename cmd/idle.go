@@ -23,22 +23,35 @@ import (
 
 // idleCmd represents the idle command
 var idleCmd = &cobra.Command{
-	Use:   "idle",
-	Short: "Find idle load balancers",
-	Long: `Scan your load balancers and find idle ones.`,
+	Use:       "idle",
+	Short:     "Find idle load balancers",
+	Long:      `Scan your load balancers and find idle ones.`,
+	Args:      cobra.OnlyValidArgs,
+	ValidArgs: []string{"elb", "ebs", "eip"},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Idle ELBs:")
-
-		clbList, err1 := ListUnattachedClassicLBs()
-		if err1 == nil {
-			for _, elb := range clbList {
-				fmt.Println(" - ", elb)
+		if args[0] == "eip" {
+			fmt.Println("Untattached Elastic IPs:")
+			eipList, err := ListUnattachedElasticIPs()
+			if err == nil {
+				for _, eip := range eipList {
+					fmt.Println(" - ", eip)
+				}
 			}
 		}
-		elbList, err2 := ListUnattachedELBs()
-		if err2 == nil {
-			for _, elb := range elbList {
-				fmt.Println(" - ", elb)
+
+		if args[0] == "elb" {
+			fmt.Println("Untattached ELBs:")
+			clbList, err1 := ListUnattachedClassicLBs()
+			if err1 == nil {
+				for _, elb := range clbList {
+					fmt.Println(" - ", elb)
+				}
+			}
+			elbList, err2 := ListUnattachedELBs()
+			if err2 == nil {
+				for _, elb := range elbList {
+					fmt.Println(" - ", elb)
+				}
 			}
 		}
 	},
