@@ -29,30 +29,29 @@ var idleCmd = &cobra.Command{
 	Args:      cobra.OnlyValidArgs,
 	ValidArgs: []string{"elb", "ebs", "eip"},
 	Run: func(cmd *cobra.Command, args []string) {
-		if args[0] == "eip" {
-			fmt.Println("Untattached Elastic IPs:")
+		resultList := make([]string, 0)
+		switch arg1 := args[0]; arg1 {
+		case "eip":
 			eipList, err := ListUnattachedElasticIPs()
-			if err == nil {
-				for _, eip := range eipList {
-					fmt.Println(" - ", eip)
-				}
+			if err != nil {
+				fmt.Println("Error", err)
 			}
-		}
-
-		if args[0] == "elb" {
-			fmt.Println("Untattached ELBs:")
+			resultList = eipList
+			break
+		case "elb":
 			clbList, err1 := ListUnattachedClassicLBs()
-			if err1 == nil {
-				for _, elb := range clbList {
-					fmt.Println(" - ", elb)
-				}
+			if err1 != nil {
+				fmt.Println("Error", err1)
 			}
 			elbList, err2 := ListUnattachedELBs()
-			if err2 == nil {
-				for _, elb := range elbList {
-					fmt.Println(" - ", elb)
-				}
+			if err2 != nil {
+				fmt.Println("Error", err2)
 			}
+			resultList = append(clbList, elbList...)
+		}
+
+		for _, el := range resultList {
+			fmt.Println(" - ", el)
 		}
 	},
 }
