@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"github.com/aint/CloudElephant/cmd/aws"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -32,18 +33,18 @@ var idleCmd = &cobra.Command{
 		resultList := make([]string, 0)
 		switch arg1 := args[0]; arg1 {
 		case "eip":
-			eipList, err := ListUnattachedElasticIPs()
+			eipList, err := aws.ListUnattachedElasticIPs()
 			if err != nil {
 				fmt.Println("Error", err)
 			}
 			resultList = eipList
 			break
 		case "elb":
-			clbList, err1 := ListUnattachedClassicLBs()
+			clbList, err1 := aws.ListUnattachedClassicLBs()
 			if err1 != nil {
 				fmt.Println("Error", err1)
 			}
-			elbList, err2 := ListUnattachedELBs()
+			elbList, err2 := aws.ListUnattachedELBs()
 			if err2 != nil {
 				fmt.Println("Error", err2)
 			}
