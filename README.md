@@ -18,4 +18,16 @@ Supports:
  - Azure Managed Disks _WIP_
 
 ## Installation
-WIP
+
+### Build from sources
+
+Use `go get` to get the latest version:
+
+`go get -u github.com/aint/CloudElephant`
+
+### Download from the Releases page
+
+Soon.
+
+## Is it any good?
+Yes.
