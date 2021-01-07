@@ -16,11 +16,15 @@ limitations under the License.
 package cmd
 
 import (
-	"github.com/aint/CloudElephant/cmd/aws"
 	"fmt"
+	"time"
+
+	"github.com/aint/CloudElephant/cmd/aws"
 
 	"github.com/spf13/cobra"
 )
+
+var completed = false
 
 // idleCmd represents the idle command
 var idleCmd = &cobra.Command{
@@ -30,6 +34,11 @@ var idleCmd = &cobra.Command{
 	Args:      cobra.OnlyValidArgs,
 	ValidArgs: []string{"elb", "ebs", "eip"},
 	Run: func(cmd *cobra.Command, args []string) {
+		ticker := time.NewTicker(200 * time.Millisecond)
+		tickerDone := make(chan bool)
+
+		go printProgressBar(ticker, tickerDone)
+
 		resultList := make([]string, 0)
 		switch arg1 := args[0]; arg1 {
 		case "eip":
@@ -51,10 +60,23 @@ var idleCmd = &cobra.Command{
 			resultList = append(clbList, elbList...)
 		}
 
+		tickerDone <- true
+
 		for _, el := range resultList {
 			fmt.Println(" - ", el)
 		}
 	},
+}
+
+func printProgressBar(ticker *time.Ticker, done chan bool) {
+	for {
+		select {
+		case <-done:
+			return
+		case <-ticker.C:
+			fmt.Print(".")
+		}
+	}
 }
 
 func init() {
