@@ -32,7 +32,7 @@ var idleCmd = &cobra.Command{
 	Short:     "Find idle load balancers",
 	Long:      `Scan your load balancers and find idle ones.`,
 	Args:      cobra.OnlyValidArgs,
-	ValidArgs: []string{"elb", "ebs", "eip"},
+	ValidArgs: []string{"elb", "ebs", "eip", "ami"},
 	Run: func(cmd *cobra.Command, args []string) {
 		ticker := time.NewTicker(200 * time.Millisecond)
 		tickerDone := make(chan bool)
@@ -58,6 +58,14 @@ var idleCmd = &cobra.Command{
 				fmt.Println("Error", err2)
 			}
 			resultList = append(clbList, elbList...)
+			break
+		case "ami":
+			amiList, err := aws.ListUnusedAMIs()
+			if err != nil {
+				fmt.Println("Error", err)
+			}
+			resultList = amiList
+			break
 		}
 
 		tickerDone <- true
