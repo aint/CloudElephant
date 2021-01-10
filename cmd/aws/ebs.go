@@ -107,5 +107,42 @@ func isNotRootVolume(device string) bool {
 	return !strings.HasPrefix(device, xvda) && !strings.HasPrefix(device, sda1)
 }
 
-// func listAvailableVolumes() ([]string, error) {
-// }
+func ListAvailableEBSs() ([]string, error) {
+	sess, err := newSession()
+	if err != nil {
+		return nil, err
+	}
+	ec2Svc := ec2.New(sess)
+
+	ebsAvailableStatus := "available"
+	ebsStatusFilterName := "status"
+	filter := &ec2.Filter{
+		Name:   &ebsStatusFilterName,
+		Values: []*string{&ebsAvailableStatus},
+	}
+	volumeInput := &ec2.DescribeVolumesInput{
+		Filters: []*ec2.Filter{filter},
+	}
+
+	volumeOutput, err := ec2Svc.DescribeVolumes(volumeInput)
+	if err != nil {
+		return nil, fmt.Errorf("Error describing EBSs: %w", err)
+	}
+
+	ebsList := make([]string, 0)
+	for _, volume := range volumeOutput.Volumes {
+		var ebsName *string
+		for _, tag := range volume.Tags {
+			if *tag.Key == "Name" {
+				ebsName = tag.Value
+			}
+		}
+		ebsEntry := *volume.VolumeId
+		if ebsName != nil {
+			ebsEntry = ebsEntry + ", " + *ebsName
+		}
+		ebsList = append(ebsList, ebsEntry)
+	}
+
+	return ebsList, nil
+}
