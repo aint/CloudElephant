@@ -107,6 +107,7 @@ func isNotRootVolume(device string) bool {
 	return !strings.HasPrefix(device, xvda) && !strings.HasPrefix(device, sda1)
 }
 
+// ListAvailableEBSs lists EBS volumes with available status
 func ListAvailableEBSs() ([]string, error) {
 	sess, err := newSession()
 	if err != nil {
