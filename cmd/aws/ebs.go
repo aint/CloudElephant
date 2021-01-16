@@ -147,3 +147,57 @@ func ListAvailableEBSs() ([]string, error) {
 
 	return ebsList, nil
 }
+
+// ListEBSsOnStoppedEC2 lists EBS volumes attached to stopped EC2 instances
+func ListEBSsOnStoppedEC2() ([]string, error) {
+	sess, err := newSession()
+	if err != nil {
+		return nil, err
+	}
+	ec2Svc := ec2.New(sess)
+
+	instanceStateName := "instance-state-name"
+	stoppedStatus := "stopped"
+	filter := &ec2.Filter{
+		Name:   &instanceStateName,
+		Values: []*string{&stoppedStatus},
+	}
+
+	instancesInput := &ec2.DescribeInstancesInput{
+		Filters: []*ec2.Filter{filter},
+	}
+	instancesOutput, err := ec2Svc.DescribeInstances(instancesInput)
+	if err != nil {
+		return nil, fmt.Errorf("Error describing EC2 instances: %w", err)
+	}
+
+	ebsList := make([]string, 0)
+	for _, reservation := range instancesOutput.Reservations {
+		for _, instance := range reservation.Instances {
+			for _, blockDev := range instance.BlockDeviceMappings {
+				volumeInput := &ec2.DescribeVolumesInput{
+					VolumeIds: []*string{blockDev.Ebs.VolumeId},
+				}
+				volumeOutput, err := ec2Svc.DescribeVolumes(volumeInput)
+				if err != nil {
+					return nil, fmt.Errorf("Error describing EBS volumes: %w", err)
+				}
+
+				var name *string
+				for _, tag := range volumeOutput.Volumes[0].Tags {
+					if *tag.Key == "Name" {
+						name = tag.Value
+					}
+				}
+
+				ebsEntry := *volumeOutput.Volumes[0].VolumeId + ", type: " + *volumeOutput.Volumes[0].VolumeType
+				if name != nil {
+					ebsEntry = *name + ", " + ebsEntry
+				}
+				ebsList = append(ebsList, ebsEntry)
+			}
+		}
+	}
+
+	return ebsList, nil
+}
