@@ -60,11 +60,15 @@ var idleCmd = &cobra.Command{
 			resultList = append(clbList, elbList...)
 			break
 		case "ebs":
-			ebsList, err := aws.ListAvailableEBSs()
-			if err != nil {
-				fmt.Println("Error", err)
+			ebsList1, err1 := aws.ListAvailableEBSs()
+			if err1 != nil {
+				fmt.Println("Error", err1)
 			}
-			resultList = ebsList
+			ebsList2, err2 := aws.ListEBSsOnStoppedEC2()
+			if err2 != nil {
+				fmt.Println("Error", err2)
+			}
+			resultList = append(ebsList1, ebsList2...)
 			break
 		case "ami":
 			amiList, err := aws.ListUnusedAMIs()
