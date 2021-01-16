@@ -24,11 +24,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var completed = false
-
-// idleCmd represents the idle command
-var idleCmd = &cobra.Command{
-	Use:       "idle",
+// unusedCmd represents the idle command
+var unusedCmd = &cobra.Command{
+	Use:       "unused",
 	Short:     "Find idle load balancers",
 	Long:      `Scan your load balancers and find idle ones.`,
 	Args:      cobra.OnlyValidArgs,
@@ -99,15 +97,15 @@ func printProgressBar(ticker *time.Ticker, done chan bool) {
 }
 
 func init() {
-	rootCmd.AddCommand(idleCmd)
+	rootCmd.AddCommand(unusedCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// idleCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// unusedCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// idleCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// unusedCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
