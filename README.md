@@ -8,14 +8,17 @@ _Dedicated to Terry A. Davis. The smartest programmer that's ever lived._
 
 # Cloud Elephant
 
-Cloud Elephant is a tool providing a simple CLI interface for finding idle resources in public clouds (AWS, Azure).
+Cloud Elephant is a tool providing a simple CLI interface for finding idle and unused resources in public clouds (AWS, Azure).
 
 Supports:
  - AWS ELB (Elastic Load Balancer)
  - AWS EIP (Elastic IP Addresses)
- - AWS EBS (Elastic Block Store) _WIP_
- - AWS Elastic Compute Cloud (EC2) _WIP_
- - Azure Managed Disks _WIP_
+ - AWS EBS (Elastic Block Store)
+ - AWS AMI (Machine Images)
+ - AWS RDS (Relational Database Service) _planned_
+ - AWS EC2 (Elastic Compute Cloud) _planned_
+ - Azure Managed Disk _planned_
+ - Azure Load Balancer _planned_
 
 ## Installation
 
@@ -23,7 +26,11 @@ Supports:
 
 Use `go get` to get the latest version:
 
-`go get -u github.com/aint/CloudElephant`
+`$ go get -u github.com/aint/CloudElephant`
+
+and add an alias:
+
+`$ alias ce=CloudElephant`
 
 ### Download from the Releases page
 
