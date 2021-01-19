@@ -1,5 +1,5 @@
 /*
-Copyright © 2020 Oleksandr Tyshkovets <olexandr.tyshkovets@gmail.com>
+Copyright © 2020 - 2021 Oleksandr Tyshkovets <olexandr.tyshkovets@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,14 +28,21 @@ var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "CloudElephant",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Use:   "ce",
+	Short: "Find unused and idle resources in your public cloud (AWS, Azure)",
+	Long: `Cloud Elephant is a tool providing a simple CLI interface for finding idle and
+unused resources in public clouds (AWS, Azure).
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+Supports:
+ - AWS ELB (Elastic Load Balancer)
+ - AWS EIP (Elastic IP Addresses)
+ - AWS EBS (Elastic Block Store)
+ - AWS AMI (Machine Images)
+ - AWS RDS (Relational Database Service) [planned]
+ - AWS EC2 (Elastic Compute Cloud) [planned]
+ - Azure Managed Disk [planned]
+ - Azure Load Balancer [planned]
+`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	//	Run: func(cmd *cobra.Command, args []string) { },

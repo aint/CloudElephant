@@ -24,11 +24,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// unusedCmd represents the idle command
+// unusedCmd represents the unused command
 var unusedCmd = &cobra.Command{
 	Use:       "unused",
-	Short:     "Find idle load balancers",
-	Long:      `Scan your load balancers and find idle ones.`,
+	Short:     "Find unused cloud resources",
+	Long:      `Scan your ELBs, EBSs, EIPs, AMIs and find unused ones.`,
 	Args:      cobra.OnlyValidArgs,
 	ValidArgs: []string{"elb", "ebs", "eip", "ami"},
 	Run: func(cmd *cobra.Command, args []string) {
