@@ -24,7 +24,7 @@ Supports:
 
 ### Build from sources
 
-Use `go get` to get the latest version:
+If you want the latest version, the recommended installation option is to use `go get`:
 
 `$ go get -u github.com/aint/CloudElephant`
 
@@ -34,7 +34,7 @@ and add an alias:
 
 ### Download from the Releases page
 
-Soon.
+Download a binary from the [GitHub Releases](https://github.com/aint/CloudElephant/releases) tab.
 
 ## Is it any good?
 Yes.
