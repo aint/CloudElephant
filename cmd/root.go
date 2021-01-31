@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"runtime"
 	"fmt"
 	"github.com/spf13/cobra"
 	"os"
@@ -63,6 +64,9 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
+
+	rootCmd.Version = "0.0.1" // TODO read version from config file, env, etc
+	rootCmd.SetVersionTemplate(fmt.Sprintf("Cloud Elephant v{{.Version}} %s/%s\n", runtime.GOOS, runtime.GOARCH))
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.CloudElephant.yaml)")
 
