@@ -156,6 +156,37 @@ func ListEBSsOnStoppedEC2() ([]string, error) {
 	}
 	ec2Svc := ec2.New(sess)
 
+	volumeIDs, err := getVolumeIDsOnStoppedEC2(ec2Svc)
+	if err != nil {
+		return nil, err
+	}
+
+	volumesInput := &ec2.DescribeVolumesInput{VolumeIds: volumeIDs}
+	volumesOutput, err := ec2Svc.DescribeVolumes(volumesInput)
+	if err != nil {
+		return nil, fmt.Errorf("Error describing EBS volumes: %w", err)
+	}
+
+	ebsList := make([]string, 0)
+	for _, volume := range volumesOutput.Volumes {
+		var name *string
+		for _, tag := range volumesOutput.Volumes[0].Tags {
+			if *tag.Key == "Name" {
+				name = tag.Value
+			}
+		}
+
+		ebsEntry := *volume.VolumeId + ", type: " + *volume.VolumeType
+		if name != nil {
+			ebsEntry = *name + ", " + ebsEntry
+		}
+		ebsList = append(ebsList, ebsEntry)
+	}
+
+	return ebsList, nil
+}
+
+func getVolumeIDsOnStoppedEC2(ec2Svc *ec2.EC2) ([]*string, error) {
 	instanceStateName := "instance-state-name"
 	stoppedStatus := "stopped"
 	filter := &ec2.Filter{
@@ -171,33 +202,14 @@ func ListEBSsOnStoppedEC2() ([]string, error) {
 		return nil, fmt.Errorf("Error describing EC2 instances: %w", err)
 	}
 
-	ebsList := make([]string, 0)
+	volumeIDs := make([]*string, 0)
 	for _, reservation := range instancesOutput.Reservations {
 		for _, instance := range reservation.Instances {
 			for _, blockDev := range instance.BlockDeviceMappings {
-				volumeInput := &ec2.DescribeVolumesInput{
-					VolumeIds: []*string{blockDev.Ebs.VolumeId},
-				}
-				volumeOutput, err := ec2Svc.DescribeVolumes(volumeInput)
-				if err != nil {
-					return nil, fmt.Errorf("Error describing EBS volumes: %w", err)
-				}
-
-				var name *string
-				for _, tag := range volumeOutput.Volumes[0].Tags {
-					if *tag.Key == "Name" {
-						name = tag.Value
-					}
-				}
-
-				ebsEntry := *volumeOutput.Volumes[0].VolumeId + ", type: " + *volumeOutput.Volumes[0].VolumeType
-				if name != nil {
-					ebsEntry = *name + ", " + ebsEntry
-				}
-				ebsList = append(ebsList, ebsEntry)
+				volumeIDs = append(volumeIDs, blockDev.Ebs.VolumeId)
 			}
 		}
 	}
 
-	return ebsList, nil
+	return volumeIDs, nil
 }
