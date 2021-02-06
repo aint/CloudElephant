@@ -174,27 +174,20 @@ func ListEBSsOnStoppedEC2() ([]string, error) {
 }
 
 func getVolumeIDsOnStoppedEC2(ec2Svc *ec2.EC2) ([]*string, error) {
-	instanceStateName := "instance-state-name"
-	stoppedStatus := "stopped"
 	filter := &ec2.Filter{
-		Name:   &instanceStateName,
-		Values: []*string{&stoppedStatus},
+		Name:   aws.String("instance-state-name"),
+		Values: aws.StringSlice([]string{"stopped"}),
 	}
 
-	instancesInput := &ec2.DescribeInstancesInput{
-		Filters: []*ec2.Filter{filter},
-	}
-	instancesOutput, err := ec2Svc.DescribeInstances(instancesInput)
+	instances, err := describeEC2Instances(nil, []*ec2.Filter{filter}, ec2Svc)
 	if err != nil {
 		return nil, fmt.Errorf("Error describing EC2 instances: %w", err)
 	}
 
 	volumeIDs := make([]*string, 0)
-	for _, reservation := range instancesOutput.Reservations {
-		for _, instance := range reservation.Instances {
-			for _, blockDev := range instance.BlockDeviceMappings {
-				volumeIDs = append(volumeIDs, blockDev.Ebs.VolumeId)
-			}
+	for _, instance := range instances {
+		for _, blockDev := range instance.BlockDeviceMappings {
+			volumeIDs = append(volumeIDs, blockDev.Ebs.VolumeId)
 		}
 	}
 

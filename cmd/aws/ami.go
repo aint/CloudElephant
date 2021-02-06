@@ -18,6 +18,7 @@ package aws
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/aws"
 )
 
 // ListUnusedAMIs lists unused AMIs
@@ -39,21 +40,16 @@ func ListUnusedAMIs() ([]string, error) {
 
 	amiList := make([]string, 0)
 	for _, img := range imagesOutput.Images {
-		imageID := img.ImageId
-		imageIDFilterName := "image-id"
 		filter := &ec2.Filter{
-			Name:   &imageIDFilterName,
-			Values: []*string{imageID},
+			Name:   aws.String("image-id"),
+			Values: []*string{img.ImageId},
 		}
-		ec2Input := &ec2.DescribeInstancesInput{
-			Filters: []*ec2.Filter{filter},
-		}
-		ec2Output, err := ec2Svc.DescribeInstances(ec2Input)
+		instances, err := describeEC2Instances(nil, []*ec2.Filter{filter}, ec2Svc)
 		if err != nil {
 			return nil, fmt.Errorf("Error describing ec2 instances: %w", err)
 		}
-		if len(ec2Output.Reservations) == 0 {
-			amiEntry := fmt.Sprint(*img.Name, ", imageId: ", *imageID)
+		if len(instances) == 0 {
+			amiEntry := fmt.Sprint(*img.Name, ", imageId: ", *img.ImageId)
 			amiList = append(amiList, amiEntry)
 		}
 	}
