@@ -22,6 +22,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/aws"
 )
 
 // ListIdleEBSs lists idle EBS volumes
@@ -32,22 +33,15 @@ func ListIdleEBSs() ([]string, error) {
 	}
 	ec2Svc := ec2.New(sess)
 
-	ebsInUseStatus := "in-use"
-	ebsStatusFilterName := "status"
 	filter := &ec2.Filter{
-		Name:   &ebsStatusFilterName,
-		Values: []*string{&ebsInUseStatus},
+		Name:   aws.String("status"),
+		Values: aws.StringSlice([]string{"in-use"}),
 	}
-
-	volumeInput := &ec2.DescribeVolumesInput{
-		Filters: []*ec2.Filter{filter},
-	}
-
-	volumeOutput, err := ec2Svc.DescribeVolumes(volumeInput)
+	volumes, err := describeVolumes(nil, []*ec2.Filter{filter}, ec2Svc)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error describing EBSs: %w", err)
 	}
-	for _, volume := range volumeOutput.Volumes {
+	for _, volume := range volumes {
 		for _, attachment := range volume.Attachments {
 			// fmt.Println(*volume.VolumeId)
 			if isNotRootVolume(*attachment.Device) {
@@ -115,23 +109,17 @@ func ListAvailableEBSs() ([]string, error) {
 	}
 	ec2Svc := ec2.New(sess)
 
-	ebsAvailableStatus := "available"
-	ebsStatusFilterName := "status"
 	filter := &ec2.Filter{
-		Name:   &ebsStatusFilterName,
-		Values: []*string{&ebsAvailableStatus},
+		Name:   aws.String("status"),
+		Values: aws.StringSlice([]string{"available"}),
 	}
-	volumeInput := &ec2.DescribeVolumesInput{
-		Filters: []*ec2.Filter{filter},
-	}
-
-	volumeOutput, err := ec2Svc.DescribeVolumes(volumeInput)
+	volumes, err := describeVolumes(nil, []*ec2.Filter{filter}, ec2Svc)
 	if err != nil {
 		return nil, fmt.Errorf("Error describing EBSs: %w", err)
 	}
 
 	ebsList := make([]string, 0)
-	for _, volume := range volumeOutput.Volumes {
+	for _, volume := range volumes {
 		var ebsName *string
 		for _, tag := range volume.Tags {
 			if *tag.Key == "Name" {
@@ -161,16 +149,15 @@ func ListEBSsOnStoppedEC2() ([]string, error) {
 		return nil, err
 	}
 
-	volumesInput := &ec2.DescribeVolumesInput{VolumeIds: volumeIDs}
-	volumesOutput, err := ec2Svc.DescribeVolumes(volumesInput)
+	volumes, err := describeVolumes(volumeIDs, nil, ec2Svc)
 	if err != nil {
 		return nil, fmt.Errorf("Error describing EBS volumes: %w", err)
 	}
 
 	ebsList := make([]string, 0)
-	for _, volume := range volumesOutput.Volumes {
+	for _, volume := range volumes {
 		var name *string
-		for _, tag := range volumesOutput.Volumes[0].Tags {
+		for _, tag := range volume.Tags {
 			if *tag.Key == "Name" {
 				name = tag.Value
 			}
@@ -213,3 +200,19 @@ func getVolumeIDsOnStoppedEC2(ec2Svc *ec2.EC2) ([]*string, error) {
 
 	return volumeIDs, nil
 }
+
+func describeVolumes(ids []*string, filters []*ec2.Filter, ec2Svc *ec2.EC2) ([]*ec2.Volume, error) {
+	volumesInput := &ec2.DescribeVolumesInput{
+		Filters:   filters,
+		VolumeIds: ids,
+	}
+
+	volumes := make([]*ec2.Volume, 0)
+	err := ec2Svc.DescribeVolumesPages(volumesInput, func(page *ec2.DescribeVolumesOutput, lastPage bool) bool {
+		volumes = append(volumes, page.Volumes...)
+		return lastPage
+	})
+
+	return volumes, err
+}
+
