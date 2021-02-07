@@ -75,13 +75,17 @@ func targetGroupsNotInUse(elbSvc *elbv2.ELBV2, targetGroups []*elbv2.TargetGroup
 }
 
 func describeAllELBs(elbV2Svc *elbv2.ELBV2) ([]*elbv2.LoadBalancer, error) {
+	elbList := make([]*elbv2.LoadBalancer, 0)
 	input := &elbv2.DescribeLoadBalancersInput{}
-	result, err := elbV2Svc.DescribeLoadBalancers(input)
+	err := elbV2Svc.DescribeLoadBalancersPages(input, func(page *elbv2.DescribeLoadBalancersOutput, lastPage bool) bool {
+		elbList = append(elbList, page.LoadBalancers...)
+		return lastPage
+	})
 	if err != nil {
 		return nil, fmt.Errorf("Error describing ELBs: %w", err)
 	}
 
-	return result.LoadBalancers, nil
+	return elbList, nil
 }
 
 // ListUnattachedClassicLBs returns unattached Classic Load Balancers
@@ -110,13 +114,17 @@ func ListUnattachedClassicLBs() ([]string, error) {
 }
 
 func describeAllClassicLBs(elbSvc *elb.ELB) ([]*elb.LoadBalancerDescription, error) {
+	elbList := make([]*elb.LoadBalancerDescription, 0)
 	input := &elb.DescribeLoadBalancersInput{}
-	output, err := elbSvc.DescribeLoadBalancers(input)
+	err := elbSvc.DescribeLoadBalancersPages(input, func(page *elb.DescribeLoadBalancersOutput, lastPage bool) bool {
+		elbList = append(elbList, page.LoadBalancerDescriptions...)
+		return lastPage
+	})
 	if err != nil {
 		return nil, fmt.Errorf("Error describing classic ELBs: %w", err)
 	}
 
-	return output.LoadBalancerDescriptions, nil
+	return elbList, nil
 }
 
 func extractClassicLBRegion(elb *elb.LoadBalancerDescription) string {
