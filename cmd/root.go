@@ -58,6 +58,10 @@ func Execute() {
 	}
 }
 
+var gitTag = ""
+var gitCommit = ""
+var gitBranch = "develop"
+
 func init() {
 	cobra.OnInitialize(initConfig)
 
@@ -65,8 +69,12 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.Version = "0.0.1" // TODO read version from config file, env, etc
-	rootCmd.SetVersionTemplate(fmt.Sprintf("Cloud Elephant v{{.Version}} %s/%s\n", runtime.GOOS, runtime.GOARCH))
+	if gitBranch == "master" {
+		rootCmd.Version = gitTag
+	} else {
+		rootCmd.Version = gitTag + "@" + gitCommit
+	}
+	rootCmd.SetVersionTemplate(fmt.Sprintf("Cloud Elephant {{.Version}} %s/%s\n", runtime.GOOS, runtime.GOARCH))
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.CloudElephant.yaml)")
 
