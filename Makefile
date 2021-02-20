@@ -4,8 +4,20 @@ TAG=$(shell git describe --tags |cut -d- -f1)
 
 LDFLAGS = -ldflags "-X github.com/aint/CloudElephant/cmd.gitTag=${TAG} -X github.com/aint/CloudElephant/cmd.gitCommit=${COMMIT} -X github.com/aint/CloudElephant/cmd.gitBranch=${BRANCH}"
 
-build:
+.PHONY: help deps build test clean
+
+help: ## Display this help screen
+	@echo "Makefile available targets:"
+	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  * \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+
+deps: ## Download the dependencies
+	go mod download
+
+build: deps ## Build the executable
 	go build ${LDFLAGS} -v -o ce .
 
-test:
+clean: ## Remove the executable
+	rm ce
+
+test: ## Run tests
 	go test -v ./...
