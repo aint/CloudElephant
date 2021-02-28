@@ -13,8 +13,7 @@ help: ## Display this help screen
 deps: ## Download the dependencies
 	go mod download
 
-build: ## Build the executable
-	deps
+build: deps ## Build the executable
 	go build ${LDFLAGS} -v -o ce .
 
 clean: ## Remove the executable
