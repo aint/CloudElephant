@@ -13,7 +13,8 @@ help: ## Display this help screen
 deps: ## Download the dependencies
 	go mod download
 
-build: deps ## Build the executable
+build: ## Build the executable
+	deps
 	go build ${LDFLAGS} -v -o ce .
 
 clean: ## Remove the executable
@@ -21,3 +22,7 @@ clean: ## Remove the executable
 
 test: ## Run tests
 	go test -v ./...
+
+lint: deps ## Lint the source code
+	golangci-lint run --timeout 5m -E golint
+
