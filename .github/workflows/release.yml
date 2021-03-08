@@ -46,7 +46,7 @@ jobs:
           go-version: ^1.15
 
       - name: Build Binary
-        run: go build -v -o ce .
+        run: make build
         env:
           GOARCH: amd64
           GOOS: ${{ matrix.goos }}
