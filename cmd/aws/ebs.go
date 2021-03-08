@@ -101,8 +101,18 @@ func isNotRootVolume(device string) bool {
 	return !strings.HasPrefix(device, xvda) && !strings.HasPrefix(device, sda1)
 }
 
+func ListUnusedEBSs() ([]Result, error) {
+	l1, err := listAvailableEBSs()
+	if err != nil {
+		return nil, err
+	}
+	l2, err := listEBSsOnStoppedEC2()
+	return append(l1, l2...), err
+}
+
+
 // ListAvailableEBSs lists EBS volumes with available status
-func ListAvailableEBSs() ([]string, error) {
+func listAvailableEBSs() ([]Result, error) {
 	sess, err := newSession()
 	if err != nil {
 		return nil, err
@@ -133,11 +143,11 @@ func ListAvailableEBSs() ([]string, error) {
 		ebsList = append(ebsList, ebsEntry)
 	}
 
-	return ebsList, nil
+	return []Result{{"Available EBS volumes:", ebsList}}, nil
 }
 
 // ListEBSsOnStoppedEC2 lists EBS volumes attached to stopped EC2 instances
-func ListEBSsOnStoppedEC2() ([]string, error) {
+func listEBSsOnStoppedEC2() ([]Result, error) {
 	sess, err := newSession()
 	if err != nil {
 		return nil, err
@@ -170,7 +180,7 @@ func ListEBSsOnStoppedEC2() ([]string, error) {
 		ebsList = append(ebsList, ebsEntry)
 	}
 
-	return ebsList, nil
+	return []Result{{"EBS volumes on stopped EC2:", ebsList}}, nil
 }
 
 func getVolumeIDsOnStoppedEC2(ec2Svc *ec2.EC2) ([]*string, error) {

@@ -21,6 +21,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 )
 
+type Result struct {
+	Label     string
+	Resources []string
+}
+
 func newSession() (*session.Session, error) {
 	sess, err := session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,

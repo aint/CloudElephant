@@ -24,7 +24,7 @@ import (
 )
 
 // ListUnattachedELBs returns unattached Application and Network Load Balancers
-func ListUnattachedELBs() ([]string, error) {
+func ListUnattachedELBs() ([]Result, error) {
 	sess, err := newSession()
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func ListUnattachedELBs() ([]string, error) {
 			unattachedELBList = append(unattachedELBList, elbWithRegion)
 		}
 	}
-	return unattachedELBList, nil
+	return []Result{{"Unattached ELBv2:", unattachedELBList}}, nil
 }
 
 func targetGroupsNotInUse(elbSvc *elbv2.ELBV2, targetGroups []*elbv2.TargetGroup) (bool, error) {
@@ -89,7 +89,7 @@ func describeAllELBs(elbV2Svc *elbv2.ELBV2) ([]*elbv2.LoadBalancer, error) {
 }
 
 // ListUnattachedClassicLBs returns unattached Classic Load Balancers
-func ListUnattachedClassicLBs() ([]string, error) {
+func ListUnattachedClassicLBs() ([]Result, error) {
 	sess, err := newSession()
 	if err != nil {
 		return nil, err
@@ -110,7 +110,7 @@ func ListUnattachedClassicLBs() ([]string, error) {
 		}
 	}
 
-	return unattachedELBList, nil
+	return []Result{{"Unattached ELBv1:", unattachedELBList}}, nil
 }
 
 func describeAllClassicLBs(elbSvc *elb.ELB) ([]*elb.LoadBalancerDescription, error) {

@@ -22,7 +22,7 @@ import (
 )
 
 // ListUnattachedElasticIPs returns unattached elastic IP addresses
-func ListUnattachedElasticIPs() ([]string, error) {
+func ListUnattachedElasticIPs() ([]Result, error) {
 	sess, err := newSession()
 	if err != nil {
 		return nil, err
@@ -55,5 +55,5 @@ func ListUnattachedElasticIPs() ([]string, error) {
 		}
 	}
 
-	return unattachedEIPList, nil
+	return []Result{{"Unattached EIP Addresses:", unattachedEIPList}}, nil
 }

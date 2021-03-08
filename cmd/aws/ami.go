@@ -22,7 +22,7 @@ import (
 )
 
 // ListUnusedAMIs lists unused AMIs
-func ListUnusedAMIs() ([]string, error) {
+func ListUnusedAMIs() ([]Result, error) {
 	sess, err := newSession()
 	if err != nil {
 		return nil, err
@@ -54,5 +54,5 @@ func ListUnusedAMIs() ([]string, error) {
 		}
 	}
 
-	return amiList, nil
+	return []Result{{"Unused AMI:", amiList}}, nil
 }
