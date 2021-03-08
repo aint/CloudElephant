@@ -30,59 +30,45 @@ var unusedCmd = &cobra.Command{
 	Short:     "Find unused cloud resources",
 	Long:      `Scan your ELBs, EBSs, EIPs, AMIs and find unused ones.`,
 	Args:      cobra.OnlyValidArgs,
-	ValidArgs: []string{"elb", "ebs", "eip", "ami"},
+	ValidArgs: []string{"elb", "elbv2", "ebs", "eip", "ami"},
 	Run: func(cmd *cobra.Command, args []string) {
 		ticker := time.NewTicker(200 * time.Millisecond)
 		tickerDone := make(chan bool)
 
 		go printProgressBar(ticker, tickerDone)
 
-		resultList := make([]string, 0)
-		switch arg1 := args[0]; arg1 {
-		case "eip":
-			eipList, err := aws.ListUnattachedElasticIPs()
-			if err != nil {
-				fmt.Println("Error", err)
-			}
-			resultList = eipList
-			break
-		case "elb":
-			clbList, err1 := aws.ListUnattachedClassicLBs()
-			if err1 != nil {
-				fmt.Println("Error", err1)
-			}
-			elbList, err2 := aws.ListUnattachedELBs()
-			if err2 != nil {
-				fmt.Println("Error", err2)
-			}
-			resultList = append(clbList, elbList...)
-			break
-		case "ebs":
-			ebsList1, err1 := aws.ListAvailableEBSs()
-			if err1 != nil {
-				fmt.Println("Error", err1)
-			}
-			ebsList2, err2 := aws.ListEBSsOnStoppedEC2()
-			if err2 != nil {
-				fmt.Println("Error", err2)
-			}
-			resultList = append(ebsList1, ebsList2...)
-			break
-		case "ami":
-			amiList, err := aws.ListUnusedAMIs()
-			if err != nil {
-				fmt.Println("Error", err)
-			}
-			resultList = amiList
-			break
+		resultList, err := findUnusedResources(args[0])
+		if err != nil {
+			fmt.Println("ERROR: ", err)
+			return
 		}
 
 		tickerDone <- true
 
-		for _, el := range resultList {
-			fmt.Println(" - ", el)
+		for _, result := range resultList {
+			fmt.Println("\n", result.Label)
+			for _, res := range result.Resources {
+				fmt.Println(" - ", res)
+			}
 		}
 	},
+}
+
+func findUnusedResources(resourceType string) ([]aws.Result, error) {
+	switch resourceType {
+	case "eip":
+		return aws.ListUnattachedElasticIPs()
+	case "elb":
+		return aws.ListUnattachedClassicLBs()
+	case "elbv2":
+		return aws.ListUnattachedELBs()
+	case "ebs":
+		return aws.ListUnusedEBSs()
+	case "ami":
+		return aws.ListUnusedAMIs()
+	default:
+		return nil, fmt.Errorf("Unknown resource type '%s", resourceType)
+	}
 }
 
 func printProgressBar(ticker *time.Ticker, done chan bool) {
