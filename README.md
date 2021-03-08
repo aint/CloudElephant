@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/aint/CloudElephant/workflows/Go/badge.svg "GitHub Actions build status")](https://github.com/aint/CloudElephant/actions?query=workflow%3AGo)
+[![Build Status](https://github.com/aint/CloudElephant/actions/workflows/go.yml/badge.svg "GitHub Actions build status")](https://github.com/aint/CloudElephant/actions?query=workflow%3AGo)
 
 <p align="center">
     <a href="https://www.youtube.com/watch?v=FoTYV22qZTg"><img src="https://i.imgur.com/G01TSPA.png" alt="Cloud Elephant" width="200"></a>
