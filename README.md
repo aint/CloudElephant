@@ -41,13 +41,17 @@ Yes.
 
 ## Usage
 
-`$ ce [unused|idle] [elb|eip|ami|ebs|ec2|rds|az_disk|az_lb]`
+`$ ce [unused|idle] [elb|elbv2|eip|ami|ebs|ec2|rds|az_disk|az_lb]`
 
 ### AWS ELB
 
-Find ELB with no associated back-end instances and ELBv2 which associated target groups has no EC2 target instance registered.
+Find classic ELB with no associated back-end instances.
 
 `$ ce idle elb`
+
+Find ELBv2 (Application, Network, Gateway) which associated target groups has no EC2 target instance registered.
+
+`$ ce idle elbv2`
 
 ### AWS EBS
 
