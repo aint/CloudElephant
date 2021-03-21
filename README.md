@@ -22,6 +22,15 @@ Supports:
 
 ## Installation
 
+### MacOS
+
+Use homebrew:
+
+```
+$ brew tap aint/cloudelephant-tap
+$ brew install cloudelephant
+```
+
 ### Build from sources
 
 If you want the latest version, the recommended installation option is to use `go get`:
