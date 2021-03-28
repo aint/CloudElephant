@@ -44,25 +44,42 @@ func ListIdleEBSs() ([]Result, error) {
 	}
 	ebsList := make([]string, 0)
 	for _, volume := range volumes {
-		for _, attachment := range volume.Attachments {
-			// fmt.Println(*volume.VolumeId)
-			if isNotRootVolume(*attachment.Device) {
-				// fmt.Println(*attachment.Device, ", ", *attachment.VolumeId)
+		if !isRootVolume(volume.Attachments) {
+			fmt.Println(*volume.VolumeId)
 
-				volumeReadOpsMetric := "VolumeReadOps"
-				namespace := "AWS/EBS"
-				statistic := "Sum"
-				endTime := time.Now()
-				startTime := time.Now().AddDate(0, 0, -7)
-				period := int64(3600)
-				volumeIDDimension := "VolumeId"
-				dimension := cloudwatch.Dimension{
-					Name:  &volumeIDDimension,
-					Value: volume.VolumeId,
-				}
+			volumeReadOpsMetric := "VolumeReadOps"
+			namespace := "AWS/EBS"
+			statistic := "Sum"
+			endTime := time.Now()
+			startTime := time.Now().AddDate(0, 0, -7)
+			period := int64(3600)
+			volumeIDDimension := "VolumeId"
+			dimension := cloudwatch.Dimension{
+				Name:  &volumeIDDimension,
+				Value: volume.VolumeId,
+			}
 
+			metricInput := &cloudwatch.GetMetricStatisticsInput{
+				MetricName: &volumeReadOpsMetric,
+				Namespace:  &namespace,
+				Statistics: []*string{&statistic},
+				Dimensions: []*cloudwatch.Dimension{&dimension},
+				StartTime:  &startTime,
+				EndTime:    &endTime,
+				Period:     &period,
+			}
+			metricOutput, err := cwSvc.GetMetricStatistics(metricInput)
+			if err != nil {
+				return nil, err
+			}
+			count := 0.0
+			for _, datapoint := range metricOutput.Datapoints {
+				count = count + *datapoint.Sum
+			}
+			if count <= 1 {
+				// fmt.Println("No Read Ops: ",*attachment.Device, ", ", *attachment.VolumeId)
 				metricInput := &cloudwatch.GetMetricStatisticsInput{
-					MetricName: &volumeReadOpsMetric,
+					MetricName: aws.String("VolumeWriteOps"),
 					Namespace:  &namespace,
 					Statistics: []*string{&statistic},
 					Dimensions: []*cloudwatch.Dimension{&dimension},
@@ -79,28 +96,8 @@ func ListIdleEBSs() ([]Result, error) {
 					count = count + *datapoint.Sum
 				}
 				if count <= 1 {
-					fmt.Println("No Read Ops: ",*attachment.Device, ", ", *attachment.VolumeId)
-					metricInput := &cloudwatch.GetMetricStatisticsInput{
-						MetricName: aws.String("VolumeWriteOps"),
-						Namespace:  &namespace,
-						Statistics: []*string{&statistic},
-						Dimensions: []*cloudwatch.Dimension{&dimension},
-						StartTime:  &startTime,
-						EndTime:    &endTime,
-						Period:     &period,
-					}
-					metricOutput, err := cwSvc.GetMetricStatistics(metricInput)
-					if err != nil {
-						return nil, err
-					}
-					count := 0.0
-					for _, datapoint := range metricOutput.Datapoints {
-						count = count + *datapoint.Sum
-					}
-					if count <= 1 {
-						fmt.Println("No Write Ops: ", *attachment.Device, ", ", *attachment.VolumeId)
-						ebsList = append(ebsList, *attachment.VolumeId)
-					}
+					// fmt.Println("No Write Ops: ", *attachment.Device, ", ", *attachment.VolumeId)
+					ebsList = append(ebsList, *volume.VolumeId)
 				}
 			}
 		}
@@ -109,10 +106,16 @@ func ListIdleEBSs() ([]Result, error) {
 	return []Result{{"Idle EBS volumes:", ebsList}}, nil
 }
 
-func isNotRootVolume(device string) bool {
+func isRootVolume(attachments []*ec2.VolumeAttachment) bool {
 	xvda := "/dev/xvda"
 	sda1 := "/dev/sda1"
-	return !strings.HasPrefix(device, xvda) && !strings.HasPrefix(device, sda1)
+	for _, attachment := range attachments {
+		device := attachment.Device
+		if strings.HasPrefix(*device, xvda) || strings.HasPrefix(*device, sda1) {
+			return true
+		}
+	}
+	return false
 }
 
 func ListUnusedEBSs() ([]Result, error) {
