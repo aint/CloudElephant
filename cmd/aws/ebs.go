@@ -26,12 +26,13 @@ import (
 )
 
 // ListIdleEBSs lists idle EBS volumes
-func ListIdleEBSs() ([]string, error) {
+func ListIdleEBSs() ([]Result, error) {
 	sess, err := newSession()
 	if err != nil {
 		return nil, err
 	}
 	ec2Svc := ec2.New(sess)
+	cwSvc := cloudwatch.New(sess)
 
 	filter := &ec2.Filter{
 		Name:   aws.String("status"),
@@ -41,19 +42,18 @@ func ListIdleEBSs() ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error describing EBSs: %w", err)
 	}
+	ebsList := make([]string, 0)
 	for _, volume := range volumes {
 		for _, attachment := range volume.Attachments {
 			// fmt.Println(*volume.VolumeId)
 			if isNotRootVolume(*attachment.Device) {
 				// fmt.Println(*attachment.Device, ", ", *attachment.VolumeId)
 
-				cwSvc := cloudwatch.New(sess)
-
 				volumeReadOpsMetric := "VolumeReadOps"
 				namespace := "AWS/EBS"
 				statistic := "Sum"
 				endTime := time.Now()
-				startTime := time.Now().AddDate(0, -1, 0)
+				startTime := time.Now().AddDate(0, 0, -7)
 				period := int64(3600)
 				volumeIDDimension := "VolumeId"
 				dimension := cloudwatch.Dimension{
@@ -74,25 +74,39 @@ func ListIdleEBSs() ([]string, error) {
 				if err != nil {
 					return nil, err
 				}
-				fmt.Println("len ", len(metricOutput.Datapoints))
 				count := 0.0
 				for _, datapoint := range metricOutput.Datapoints {
 					count = count + *datapoint.Sum
 				}
 				if count <= 1 {
-					fmt.Println(*attachment.Device, ", ", *attachment.VolumeId)
-					fmt.Println("count ", count)
+					fmt.Println("No Read Ops: ",*attachment.Device, ", ", *attachment.VolumeId)
+					metricInput := &cloudwatch.GetMetricStatisticsInput{
+						MetricName: aws.String("VolumeWriteOps"),
+						Namespace:  &namespace,
+						Statistics: []*string{&statistic},
+						Dimensions: []*cloudwatch.Dimension{&dimension},
+						StartTime:  &startTime,
+						EndTime:    &endTime,
+						Period:     &period,
+					}
+					metricOutput, err := cwSvc.GetMetricStatistics(metricInput)
+					if err != nil {
+						return nil, err
+					}
+					count := 0.0
 					for _, datapoint := range metricOutput.Datapoints {
-						fmt.Println("d: ", *datapoint.Sum)
+						count = count + *datapoint.Sum
+					}
+					if count <= 1 {
+						fmt.Println("No Write Ops: ", *attachment.Device, ", ", *attachment.VolumeId)
+						ebsList = append(ebsList, *attachment.VolumeId)
 					}
 				}
-
 			}
 		}
 	}
 
-	ebsList := make([]string, 0)
-	return ebsList, nil
+	return []Result{{"Idle EBS volumes:", ebsList}}, nil
 }
 
 func isNotRootVolume(device string) bool {
