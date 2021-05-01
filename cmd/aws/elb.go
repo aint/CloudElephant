@@ -43,7 +43,7 @@ func ListUnattachedELBs() ([]Result, error) {
 		}
 		output, err := svc.DescribeTargetGroups(input)
 		if err != nil {
-			return nil, fmt.Errorf("Error describing Target Groups for %v: %w", *elb.LoadBalancerName, err)
+			return nil, fmt.Errorf("error describing Target Groups for %v: %w", *elb.LoadBalancerName, err)
 		}
 		unused, err := targetGroupsNotInUse(svc, output.TargetGroups)
 		if err != nil {
@@ -65,7 +65,7 @@ func targetGroupsNotInUse(elbSvc *elbv2.ELBV2, targetGroups []*elbv2.TargetGroup
 		}
 		output, err := elbSvc.DescribeTargetHealth(input)
 		if err != nil {
-			return false, fmt.Errorf("Error describing Target Groups Health %v: %w", *targetGroup.TargetGroupArn, err)
+			return false, fmt.Errorf("error describing Target Groups Health %v: %w", *targetGroup.TargetGroupArn, err)
 		}
 		if len(output.TargetHealthDescriptions) > 0 {
 			return false, nil
@@ -82,7 +82,7 @@ func describeAllELBs(elbV2Svc *elbv2.ELBV2) ([]*elbv2.LoadBalancer, error) {
 		return lastPage
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Error describing ELBs: %w", err)
+		return nil, fmt.Errorf("error describing ELBs: %w", err)
 	}
 
 	return elbList, nil
@@ -121,7 +121,7 @@ func describeAllClassicLBs(elbSvc *elb.ELB) ([]*elb.LoadBalancerDescription, err
 		return lastPage
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Error describing classic ELBs: %w", err)
+		return nil, fmt.Errorf("error describing classic ELBs: %w", err)
 	}
 
 	return elbList, nil

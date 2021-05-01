@@ -31,7 +31,7 @@ func newSession() (*session.Session, error) {
 		SharedConfigState: session.SharedConfigEnable,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Error creating new AWS session: %w", err)
+		return nil, fmt.Errorf("error creating new AWS session: %w", err)
 	}
 	return sess, nil
 }

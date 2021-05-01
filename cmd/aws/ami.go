@@ -35,7 +35,7 @@ func ListUnusedAMIs() ([]Result, error) {
 	}
 	imagesOutput, err := ec2Svc.DescribeImages(imageInput)
 	if err != nil {
-		return nil, fmt.Errorf("Error describing images: %w", err)
+		return nil, fmt.Errorf("error describing images: %w", err)
 	}
 
 	amiList := make([]string, 0)
@@ -46,7 +46,7 @@ func ListUnusedAMIs() ([]Result, error) {
 		}
 		instances, err := describeEC2Instances(nil, []*ec2.Filter{filter}, ec2Svc)
 		if err != nil {
-			return nil, fmt.Errorf("Error describing ec2 instances: %w", err)
+			return nil, fmt.Errorf("error describing ec2 instances: %w", err)
 		}
 		if len(instances) == 0 {
 			amiEntry := fmt.Sprint(*img.Name, ", imageId: ", *img.ImageId)

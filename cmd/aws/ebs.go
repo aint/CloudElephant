@@ -40,7 +40,7 @@ func ListIdleEBSs() ([]Result, error) {
 	}
 	volumes, err := describeVolumes(nil, []*ec2.Filter{filter}, ec2Svc)
 	if err != nil {
-		return nil, fmt.Errorf("Error describing EBSs: %w", err)
+		return nil, fmt.Errorf("error describing EBSs: %w", err)
 	}
 	ebsList := make([]string, 0)
 	for _, volume := range volumes {
@@ -127,7 +127,7 @@ func listAvailableEBSs() ([]Result, error) {
 	}
 	volumes, err := describeVolumes(nil, []*ec2.Filter{filter}, ec2Svc)
 	if err != nil {
-		return nil, fmt.Errorf("Error describing EBSs: %w", err)
+		return nil, fmt.Errorf("error describing EBSs: %w", err)
 	}
 
 	ebsList := make([]string, 0)
@@ -163,7 +163,7 @@ func listEBSsOnStoppedEC2() ([]Result, error) {
 
 	volumes, err := describeVolumes(volumeIDs, nil, ec2Svc)
 	if err != nil {
-		return nil, fmt.Errorf("Error describing EBS volumes: %w", err)
+		return nil, fmt.Errorf("error describing EBS volumes: %w", err)
 	}
 
 	ebsList := make([]string, 0)
@@ -193,7 +193,7 @@ func getVolumeIDsOnStoppedEC2(ec2Svc *ec2.EC2) ([]*string, error) {
 
 	instances, err := describeEC2Instances(nil, []*ec2.Filter{filter}, ec2Svc)
 	if err != nil {
-		return nil, fmt.Errorf("Error describing EC2 instances: %w", err)
+		return nil, fmt.Errorf("error describing EC2 instances: %w", err)
 	}
 
 	volumeIDs := make([]*string, 0)
