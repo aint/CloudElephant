@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/aint/CloudElephant/cmd/aws"
+	"github.com/aint/CloudElephant/cmd/azure"
 
 	"github.com/spf13/cobra"
 )
@@ -28,9 +29,9 @@ import (
 var unusedCmd = &cobra.Command{
 	Use:       "unused",
 	Short:     "Find unused cloud resources",
-	Long:      `Scan your ELBs, EBSs, EIPs, AMIs and find unused ones.`,
+	Long:      `Scan your ELBs, EBSs, EIPs, AMIs, Azure LBs and find unused ones.`,
 	Args:      cobra.OnlyValidArgs,
-	ValidArgs: []string{"elb", "elbv2", "ebs", "eip", "ami"},
+	ValidArgs: []string{"elb", "elbv2", "ebs", "eip", "ami", "azlb"},
 	Run: func(cmd *cobra.Command, args []string) {
 		ticker := time.NewTicker(200 * time.Millisecond)
 		tickerDone := make(chan bool)
@@ -66,6 +67,8 @@ func findUnusedResources(resourceType string) ([]aws.Result, error) {
 		return aws.ListUnusedEBSs()
 	case "ami":
 		return aws.ListUnusedAMIs()
+	case "azlb":
+		return azure.ListUnusedLBs()
 	default:
 		return nil, fmt.Errorf("Unknown resource type '%s", resourceType)
 	}
