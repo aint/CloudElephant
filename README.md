@@ -17,8 +17,11 @@ Supports:
  - [AWS AMI (Machine Images)](#aws-ami)
  - AWS RDS (Relational Database Service) _planned_
  - AWS EC2 (Elastic Compute Cloud) _planned_
+ - [Azure Load Balancer](#azure-load-balancer)
  - Azure Managed Disk _planned_
- - Azure Load Balancer _planned_
+
+## Is it any good?
+Yes.
 
 ## Installation
 
@@ -45,37 +48,51 @@ and add an alias:
 
 Download a binary from the [GitHub Releases](https://github.com/aint/CloudElephant/releases) tab.
 
-## Is it any good?
-Yes.
+
+## Configuration
+
+In order to use Azure, you need to set the following environment variables:
+
+- `AZURE_SUBSCRIPTION_ID`
+- `AZURE_TENANT_ID`
+- `AZURE_CLIENT_ID`
+- `AZURE_CLIENT_SECRET`
+
 
 ## Usage
 
-`$ ce [unused|idle] [elb|elbv2|eip|ami|ebs|ec2|rds|az_disk|az_lb]`
+`$ ce [unused|idle] [elb|elbv2|eip|ami|ebs|azlb]`
 
 ### AWS ELB
 
 Find classic ELB with no associated back-end instances.
 
-`$ ce idle elb`
+`$ ce unused elb`
 
 Find ELBv2 (Application, Network, Gateway) which associated target groups has no EC2 target instance registered.
 
-`$ ce idle elbv2`
+`$ ce unused elbv2`
 
 ### AWS EBS
 
 Find available (unattached) EBS and EBS that are attached to stopped EC2 instances.
 
-`$ ce idle ebs`
+`$ ce unused ebs`
 
 ### AWS AMI
 
 Find unused Amazon Machine Images (no instances are running from AMI).
 
-`$ ce idle ami`
+`$ ce unused ami`
 
 ### AWS EIP
 
 Find Elastic IP Addresses that is not associated with a running EC2 instance or an Elastic Network Interface.
 
-`$ ce idle eip`
+`$ ce unused eip`
+
+### Azure Load Balancer
+
+Find Load Balancers which don't have any associated backend pool instances.
+
+`$ ce unused azlb`
