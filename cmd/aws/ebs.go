@@ -207,12 +207,16 @@ func getVolumeIDsOnStoppedEC2(ec2Svc *ec2.EC2) ([]*string, error) {
 }
 
 func describeVolumes(ids []*string, filters []*ec2.Filter, ec2Svc *ec2.EC2) ([]*ec2.Volume, error) {
+	volumes := make([]*ec2.Volume, 0)
+	if len(ids) == 0 {
+		return volumes, nil
+	}
+
 	volumesInput := &ec2.DescribeVolumesInput{
 		Filters:   filters,
 		VolumeIds: ids,
 	}
 
-	volumes := make([]*ec2.Volume, 0)
 	err := ec2Svc.DescribeVolumesPages(volumesInput, func(page *ec2.DescribeVolumesOutput, lastPage bool) bool {
 		volumes = append(volumes, page.Volumes...)
 		return lastPage
